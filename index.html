@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Generator Label Box</title>
+<style>
+:root{--bg:#f6f6f4;--card:#fff;--tx:#1b1b1b;--mu:#6b6b6b;--bd:#d9d9d4;--ac:#1b1b1b;--ac-tx:#fff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#161616;--card:#222;--tx:#eee;--mu:#9a9a9a;--bd:#3a3a3a;--ac:#eee;--ac-tx:#111}}
+:root[data-theme="dark"]{--bg:#161616;--card:#222;--tx:#eee;--mu:#9a9a9a;--bd:#3a3a3a;--ac:#eee;--ac-tx:#111}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Arial,sans-serif}
+.wrap{max-width:1200px;margin:0 auto;padding:16px;display:grid;gap:16px;grid-template-columns:minmax(0,420px) minmax(0,1fr)}
+@media(max-width:900px){.wrap{grid-template-columns:1fr}}
+h1{font-size:20px;margin:0 0 4px}h2{font-size:15px;margin:0 0 8px}
+.sub{color:var(--mu);font-size:13px;margin:0 0 12px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:12px;margin-bottom:12px}
+label{display:block;font-size:12px;color:var(--mu);margin:8px 0 2px}
+input[type=text],input[type=number],select,textarea{width:100%;padding:7px 8px;border:1px solid var(--bd);border-radius:6px;background:var(--bg);color:var(--tx);font:inherit}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+button{font:inherit;padding:8px 12px;border-radius:6px;border:1px solid var(--bd);background:var(--card);color:var(--tx);cursor:pointer}
+button.p{background:var(--ac);color:var(--ac-tx);border-color:var(--ac)}
+button.s{padding:4px 8px;font-size:12px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+.pv{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:10px;margin-bottom:12px}
+.pv canvas{width:100%;height:auto;display:block;border:1px solid var(--bd);background:#fff}
+.pv .row{margin-top:8px}
+#st{font-size:13px;color:var(--mu);min-height:18px}
+.chk{display:flex;gap:6px;align-items:center;font-size:13px;margin-top:8px;color:var(--tx)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div>
+  <h1>Generator Label Box</h1>
+  <p class="sub">Layout sama dengan label MPL referensi. Isi data, unduh PNG atau PDF, satuan atau semua.</p>
+
+  <div class="card">
+    <h2>Pengaturan umum</h2>
+    <label>Judul header</label>
+    <input type="text" id="hdr" value="MPL">
+    <div class="chk"><input type="checkbox" id="auto"><span>Buat label otomatis untuk setiap nomor box (1 sampai total)</span></div>
+  </div>
+
+  <div class="card" id="sbcard">
+    <h2>Simpan online (Neon)</h2>
+    <p class="sub" id="sbinfo">Simpan set label ke database online, lalu buka atau bagikan lewat link.</p>
+    <label>Nama set label</label>
+    <input type="text" id="sbname" placeholder="mis. Desk Table 20-1819 batch 1">
+    <div class="row" style="margin-top:8px">
+      <button class="p" id="sbsave">Simpan online</button>
+      <button id="sblist">Muat daftar</button>
+    </div>
+    <div id="sbpick" style="display:none;margin-top:8px">
+      <select id="sbsel"></select>
+      <div class="row" style="margin-top:6px"><button class="s" id="sbload">Buka set ini</button><button class="s" id="sbcopy">Salin link</button></div>
+    </div>
+    <div id="sbmsg" class="sub" style="margin:8px 0 0;min-height:18px"></div>
+  </div>
+
+  <div id="forms"></div>
+  <div class="row" style="margin-bottom:12px">
+    <button class="p" id="add">+ Tambah label</button>
+    <button id="tog">Impor dari Excel</button>
+  </div>
+
+  <div class="card" id="imp" style="display:none">
+    <h2>Impor dari Excel</h2>
+    <p class="sub">Tempel baris dari Excel. Kolom: kode, deskripsi, warna, ukuran, material, qty, box, total box.</p>
+    <textarea id="impt" rows="5" placeholder="20-1819&#9;DESK TABLE&#9;NATURAL&#9;40 X 40 X 50&#9;Teak Wood&#9;1 Pcs / BOX&#9;1&#9;5"></textarea>
+    <div class="row" style="margin-top:8px"><button id="impgo">Tambahkan</button></div>
+  </div>
+</div>
+
+<div>
+  <div class="card top">
+    <div class="row">
+      <select id="fmt" style="width:auto"><option value="png">PNG</option><option value="pdf">PDF</option><option value="xlsx">Excel</option><option value="docx">Word</option></select>
+      <button class="p" id="all">Download semua</button>
+      <span id="cnt" class="sub" style="margin:0"></span>
+    </div>
+    <div id="st"></div>
+  </div>
+  <div id="pvs"></div>
+</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+<script>
+const W=1310,H=910,S=2;
+const $=id=>document.getElementById(id);
+const blank=()=>({code:"",desc:"",color:"",meas:"",mat:"",qty:"1 Pcs / BOX",box:"1",total:"1",img:null});
+let items=[{code:"20-1819",desc:"DESK TABLE",color:"NATURAL",meas:"40 X 40 X 50",mat:"Teak Wood",qty:"1 Pcs / BOX",box:"1",total:"5",img:null}];
+let dl=null,timer=null;
+const esc=s=>String(s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");
+
+function fit(ctx,text,base,font,maxW,maxH){
+  const lines=String(text).split("\n");let size=base;
+  for(;size>12;size-=2){
+    ctx.font=font(size);
+    const w=Math.max(...lines.map(l=>ctx.measureText(l).width));
+    if(w<=maxW&&lines.length*size*1.15<=maxH)break;
+  }
+  return {lines,size};
+}
+function drawLabel(it,header){
+  const c=document.createElement("canvas");c.width=W*S;c.height=H*S;
+  const x=c.getContext("2d");x.scale(S,S);
+  x.fillStyle="#fff";x.fillRect(0,0,W,H);
+  x.strokeStyle="#000";x.fillStyle="#000";
+  x.lineWidth=5;x.strokeRect(46,14,1222,874);
+  x.textAlign="center";x.textBaseline="middle";
+  const hf=fit(x,header,72,s=>`italic 900 ${s}px "Arial Black",Arial,sans-serif`,1100,90);
+  x.font=`italic 900 ${hf.size}px "Arial Black",Arial,sans-serif`;
+  hf.lines.forEach((l,i)=>x.fillText(l,655,66+(i-(hf.lines.length-1)/2)*hf.size*1.1));
+  const X0=62,XM=510,X1=1253,Y0=120,Y1=865;
+  const ys=[120,166,238,283,382,428,500,546,618,664,736,789,865];
+  // image
+  if(it.img){
+    const p=8,bx=X0+p,by=Y0+p,bw=XM-X0-2*p,bh=Y1-Y0-2*p;
+    const r=Math.min(bw/it.img.width,bh/it.img.height);
+    const dw=it.img.width*r,dh=it.img.height*r;
+    x.drawImage(it.img,bx+(bw-dw)/2,by+(bh-dh)/2,dw,dh);
+  }
+  // header gray
+  x.fillStyle="#d9d9d9";x.fillRect(XM,736,X1-XM,53);x.fillStyle="#000";
+  x.lineWidth=2;x.strokeRect(X0,Y0,X1-X0,Y1-Y0);
+  x.beginPath();
+  ys.slice(1,-1).forEach(y=>{x.moveTo(XM,y);x.lineTo(X1,y)});
+  x.moveTo(XM,Y0);x.lineTo(XM,Y1);x.moveTo(780,736);x.lineTo(780,Y1);x.stroke();
+  // fields
+  const fields=[["CODE :",it.code,28],["DESCRIPTION :",it.desc,50],["COLOR :",it.color,28],["MEASUREMENTS :",it.meas,28],["MATERIAL :",it.mat,28]];
+  fields.forEach((f,i)=>{
+    const ly=ys[i*2],lh=ys[i*2+1]-ly,vy=ys[i*2+1],vh=ys[i*2+2]-vy;
+    x.textAlign="left";x.font='italic 900 28px "Arial Black",Arial,sans-serif';
+    x.fillText(f[0],XM+8,ly+lh/2+1);
+    x.textAlign="center";
+    const r=fit(x,f[1],f[2],s=>`bold ${s}px Arial,Helvetica,sans-serif`,X1-XM-40,vh-8);
+    x.font=`bold ${r.size}px Arial,Helvetica,sans-serif`;
+    r.lines.forEach((l,k)=>x.fillText(l,(XM+X1)/2,vy+vh/2+(k-(r.lines.length-1)/2)*r.size*1.15+1));
+  });
+  x.font="bold 27px Arial,Helvetica,sans-serif";
+  x.fillText("QTY",645,763);x.fillText("BOX NO",1016,763);
+  const q=fit(x,it.qty,32,s=>`bold ${s}px Arial,Helvetica,sans-serif`,250,70);
+  x.font=`bold ${q.size}px Arial,Helvetica,sans-serif`;x.fillText(q.lines[0],645,828);
+  x.font="bold 32px Arial,Helvetica,sans-serif";
+  x.fillText(it.box,947,828);x.fillText("/",1016,828);x.fillText(it.total,1085,828);
+  return c;
+}
+
+function labels(){
+  const out=[];
+  items.forEach(it=>{
+    const n=Math.max(1,parseInt(it.total)||1);
+    if($("auto").checked){for(let i=1;i<=n;i++)out.push({...it,box:String(i),total:String(n)})}
+    else out.push(it);
+  });
+  return out;
+}
+const safe=s=>String(s||"label").replace(/[^\w.\-]+/g,"_");
+const fname=(l,ext)=>`label_${safe(l.code)}_${safe(l.box)}-${safe(l.total)}.${ext}`;
+const blobOf=c=>new Promise(r=>c.toBlob(r,"image/png"));
+const jc=new WeakMap();let jn=0;
+function jpg(im){
+  if(jc.has(im))return jc.get(im);
+  const r=Math.min(1,1000/Math.max(im.width,im.height));
+  const c=document.createElement("canvas");c.width=Math.round(im.width*r);c.height=Math.round(im.height*r);
+  const g=c.getContext("2d");g.fillStyle="#fff";g.fillRect(0,0,c.width,c.height);g.drawImage(im,0,0,c.width,c.height);
+  const o={d:c.toDataURL("image/jpeg",0.82),w:c.width,h:c.height,a:"im"+(++jn)};
+  jc.set(im,o);return o;
+}
+// PDF vektor: teks asli + foto JPEG dipakai ulang, ukuran file kecil
+function pdfOf(ls,header){
+  const {jsPDF}=window.jspdf;const w=210,k=w/W,h=H*k,PT=2.8346;
+  const d=new jsPDF({orientation:"landscape",unit:"mm",format:[w,h],compress:true});
+  const X0=62,XM=510,X1=1253,Y0=120,Y1=865;
+  const ys=[120,166,238,283,382,428,500,546,618,664,736,789,865];
+  const fitP=(text,base,style,maxW,maxH)=>{
+    const lines=String(text).split("\n");let s=base;d.setFont("helvetica",style);
+    for(;s>12;s-=2){d.setFontSize(s*k*PT);
+      const tw=Math.max(...lines.map(l=>d.getTextWidth(l)))/k;
+      if(tw<=maxW&&lines.length*s*1.15<=maxH)break;}
+    return {lines,s};
+  };
+  const block=(text,base,style,maxW,maxH,cx,cy)=>{
+    const r=fitP(text,base,style,maxW,maxH);d.setFont("helvetica",style);d.setFontSize(r.s*k*PT);
+    r.lines.forEach((l,j)=>d.text(l,cx*k,(cy+(j-(r.lines.length-1)/2)*r.s*1.15)*k,{align:"center",baseline:"middle"}));
+  };
+  ls.forEach((it,i)=>{
+    if(i)d.addPage([w,h],"landscape");
+    d.setDrawColor(0);d.setTextColor(0);
+    if(it.img){
+      const o=jpg(it.img),p=8,bx=X0+p,by=Y0+p,bw=XM-X0-2*p,bh=Y1-Y0-2*p;
+      const r=Math.min(bw/o.w,bh/o.h),dw=o.w*r,dh=o.h*r;
+      d.addImage(o.d,"JPEG",(bx+(bw-dw)/2)*k,(by+(bh-dh)/2)*k,dw*k,dh*k,o.a);
+    }
+    d.setFillColor(217,217,217);d.rect(XM*k,736*k,(X1-XM)*k,53*k,"F");
+    d.setLineWidth(5*k);d.rect(46*k,14*k,1222*k,874*k);
+    d.setLineWidth(2*k);d.rect(X0*k,Y0*k,(X1-X0)*k,(Y1-Y0)*k);
+    ys.slice(1,-1).forEach(y=>d.line(XM*k,y*k,X1*k,y*k));
+    d.line(XM*k,Y0*k,XM*k,Y1*k);d.line(780*k,736*k,780*k,Y1*k);
+    block(header,72,"bolditalic",1100,90,655,66);
+    [["CODE :",it.code,28],["DESCRIPTION :",it.desc,50],["COLOR :",it.color,28],["MEASUREMENTS :",it.meas,28],["MATERIAL :",it.mat,28]].forEach((f,n)=>{
+      const ly=ys[n*2],lh=ys[n*2+1]-ly,vy=ys[n*2+1],vh=ys[n*2+2]-vy;
+      d.setFont("helvetica","bolditalic");d.setFontSize(28*k*PT);
+      d.text(f[0],(XM+8)*k,(ly+lh/2+1)*k,{baseline:"middle"});
+      block(f[1],f[2],"bold",X1-XM-40,vh-8,(XM+X1)/2,vy+vh/2+1);
+    });
+    block("QTY",27,"bold",300,50,645,763);block("BOX NO",27,"bold",400,50,1016,763);
+    block(it.qty,32,"bold",250,70,645,828);
+    block(it.box,32,"bold",60,60,947,828);block("/",32,"bold",30,60,1016,828);block(it.total,32,"bold",60,60,1085,828);
+  });
+  return d.output("blob");
+}
+function msg(t){$("st").textContent=t}
+async function save(name,blob){
+  try{
+    if(!dl)dl=await claude.use("downloads");
+  }catch(e){dl=null}
+  if(dl){
+    try{await dl.save({filename:name,data:blob});msg("Tersimpan: "+name)}
+    catch(e){msg(e&&e.code==="declined"?"Download dibatalkan.":"Download gagal: "+(e&&e.message||e))}
+    return;
+  }
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;
+  document.body.appendChild(a);a.click();a.remove();msg("Tersimpan: "+name);
+}
+
+function render(){
+  const hdr=$("hdr").value||" ";const ls=labels();
+  $("cnt").textContent=ls.length+" label";
+  const box=$("pvs");box.innerHTML="";
+  ls.forEach((l,i)=>{
+    const c=drawLabel(l,hdr);
+    const d=document.createElement("div");d.className="pv";
+    d.appendChild(c);
+    const r=document.createElement("div");r.className="row";
+    r.innerHTML=`<span class="sub" style="margin:0;flex:1">${esc(fname(l,"png"))}</span>`;
+    ["png","pdf","xlsx","docx"].forEach(f=>{
+      const b=document.createElement("button");b.className="s";b.textContent=({png:"PNG",pdf:"PDF",xlsx:"Excel",docx:"Word"})[f];
+      b.onclick=async()=>{msg("Membuat file...");save(fname(l,f),await build(f,[l],hdr))};
+      r.appendChild(b);
+    });
+    d.appendChild(r);box.appendChild(d);
+  });
+}
+function later(){clearTimeout(timer);timer=setTimeout(render,150)}
+
+$("all").onclick=async()=>{
+  const ls=labels(),hdr=$("hdr").value||" ",f=$("fmt").value;
+  if(!ls.length)return;msg("Membuat file...");
+  if(f!=="png")return save("label_semua."+f,await build(f,ls,hdr));
+  const cs=ls.map(l=>drawLabel(l,hdr));
+  if(cs.length===1)return save(fname(ls[0],"png"),await blobOf(cs[0]));
+  const z=new JSZip(),used={};
+  for(let i=0;i<cs.length;i++){
+    let n=fname(ls[i],"png");if(used[n]){n=n.replace(".png","_"+(++used[n])+".png")}else used[n]=1;
+    z.file(n,await blobOf(cs[i]));
+  }
+  save("label_semua.zip",await z.generateAsync({type:"blob"}));
+};
+
+const ci=new WeakMap();
+function cellImg(im){
+  if(ci.has(im))return ci.get(im);
+  const c=document.createElement('canvas');c.width=896;c.height=1490;
+  const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,896,1490);
+  const p=16,r=Math.min((896-2*p)/im.width,(1490-2*p)/im.height),dw=im.width*r,dh=im.height*r;
+  g.drawImage(im,(896-dw)/2,(1490-dh)/2,dw,dh);
+  const o=c.toDataURL('image/jpeg',0.82);ci.set(im,o);return o;
+}
+async function build(f,ls,hdr){
+  if(f==='png')return blobOf(drawLabel(ls[0],hdr));
+  if(f==='pdf')return pdfOf(ls,hdr);
+  if(f==='xlsx')return xlsOf(ls,hdr);
+  return docOf(ls,hdr);
+}
+// Excel: layout sel sama seperti label, satu sheet per label
+async function xlsOf(ls,hdr){
+  const wb=new ExcelJS.Workbook(),ids=new Map(),used=new Set();
+  const th={style:'thin',color:{argb:'FF000000'}},bd={top:th,left:th,bottom:th,right:th};
+  ls.forEach(it=>{
+    const n=(safe(it.code+'_'+it.box+'-'+it.total)||'Label').slice(0,25);let m=n,k=2;while(used.has(m))m=n+'_'+(k++);used.add(m);
+    const ws=wb.addWorksheet(m,{views:[{showGridLines:false}],pageSetup:{orientation:'landscape',paperSize:9,fitToPage:true,fitToWidth:1,fitToHeight:1}});
+    ws.columns=[{width:63.3},{width:37.9},{width:66.9}];
+    [66,46,72,45,99,46,72,46,72,46,72,53,76].forEach((p,r)=>{ws.getRow(r+1).height=p*0.75});
+    ws.mergeCells('A1:C1');const h=ws.getCell('A1');h.value=hdr;h.font={name:'Arial Black',italic:true,bold:true,size:36};h.alignment={horizontal:'center',vertical:'middle'};
+    ws.mergeCells('A2:A13');
+    for(let r=2;r<=11;r++)ws.mergeCells('B'+r+':C'+r);
+    [['CODE :',it.code],['DESCRIPTION :',it.desc],['COLOR :',it.color],['MEASUREMENTS :',it.meas],['MATERIAL :',it.mat]].forEach((a,i)=>{
+      const l=ws.getCell('B'+(2+i*2));l.value=a[0];l.font={name:'Arial',bold:true,italic:true,size:14};l.alignment={vertical:'middle',horizontal:'left',indent:1};
+      const v=ws.getCell('B'+(3+i*2));v.value=a[1];v.font={name:'Arial',bold:true,size:i===1?26:14};v.alignment={vertical:'middle',horizontal:'center',shrinkToFit:true};
+    });
+    const g1=ws.getCell('B12'),g2=ws.getCell('C12');g1.value='QTY';g2.value='BOX NO';
+    [g1,g2].forEach(c=>{c.font={name:'Arial',bold:true,size:14};c.alignment={horizontal:'center',vertical:'middle'};c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFD9D9D9'}}});
+    const q=ws.getCell('B13'),b=ws.getCell('C13');q.value=it.qty;b.value=it.box+'      /      '+it.total;
+    [q,b].forEach(c=>{c.font={name:'Arial',bold:true,size:16};c.alignment={horizontal:'center',vertical:'middle',shrinkToFit:true}});
+    for(let r=2;r<=13;r++)for(let c=1;c<=3;c++)ws.getCell(r,c).border=bd;
+    if(it.img){const d=cellImg(it.img);if(!ids.has(d))ids.set(d,wb.addImage({base64:d,extension:'jpeg'}));ws.addImage(ids.get(d),{tl:{nativeCol:0,nativeColOff:57150,nativeRow:1,nativeRowOff:152400},ext:{width:436,height:725},editAs:'oneCell'});}
+  });
+  const buf=await wb.xlsx.writeBuffer();
+  return new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+}
+// Word: tabel yang bisa diedit, satu halaman per label
+async function docOf(ls,hdr){
+  const NL=String.fromCharCode(10);
+  const X=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const k=15000/1191,L=Math.round(448*k),R=Math.round(743*k),M=Math.round(270*k),Q=R-M;
+  const hts=[46,72,45,99,46,72,46,72,46,72,53,76].map(p=>Math.round(p*k));
+  const H0=hts.reduce((a,b)=>a+b,0);
+  const media=new Map();let did=0;
+  const fs=(t,pt)=>{const n=Math.max(1,...String(t).split(NL).map(s=>s.length));return Math.round(Math.max(20,Math.min(pt*2,936/(0.62*n))))};
+  const RUN=(t,sz,it,font)=>`<w:r><w:rPr><w:rFonts w:ascii='${font}' w:hAnsi='${font}' w:cs='${font}'/><w:b/>${it?'<w:i/>':''}<w:sz w:val='${sz}'/></w:rPr>${String(t).split(NL).map((l,j)=>(j?'<w:br/>':'')+`<w:t xml:space='preserve'>${X(l)}</w:t>`).join('')}</w:r>`;
+  const P=(x,jc,ex)=>`<w:p><w:pPr>${ex||''}<w:spacing w:before='0' w:after='0' w:line='240' w:lineRule='auto'/><w:jc w:val='${jc||'left'}'/></w:pPr>${x||''}</w:p>`;
+  const tiny=`<w:p><w:pPr><w:spacing w:before='0' w:after='0' w:line='20' w:lineRule='exact'/></w:pPr></w:p>`;
+  const TC=(w,body,o)=>{o=o||{};return `<w:tc><w:tcPr><w:tcW w:w='${w}' w:type='dxa'/>${o.span?`<w:gridSpan w:val='${o.span}'/>`:''}${o.shade?`<w:shd w:val='clear' w:color='auto' w:fill='D9D9D9'/>`:''}${o.mar?`<w:tcMar><w:top w:w='0' w:type='dxa'/><w:left w:w='0' w:type='dxa'/><w:bottom w:w='0' w:type='dxa'/><w:right w:w='0' w:type='dxa'/></w:tcMar>`:''}<w:vAlign w:val='${o.top?'top':'center'}'/></w:tcPr>${body}</w:tc>`};
+  const TR=(h,c)=>`<w:tr><w:trPr><w:cantSplit/><w:trHeight w:val='${h}' w:hRule='exact'/></w:trPr>${c}</w:tr>`;
+  const bd=(n,sz)=>`<w:${n} w:val='single' w:sz='${sz}' w:space='0' w:color='000000'/>`;
+  const nest=it=>{
+    const f=[['CODE :',it.code,18],['DESCRIPTION :',it.desc,31],['COLOR :',it.color,18],['MEASUREMENTS :',it.meas,18],['MATERIAL :',it.mat,18]];
+    let rows='';
+    f.forEach((a,n)=>{
+      rows+=TR(hts[n*2],TC(R,P(RUN(a[0],34,1,'Arial Black')),{span:2}));
+      rows+=TR(hts[n*2+1],TC(R,P(RUN(a[1],fs(a[1],a[2]),0,'Arial'),'center'),{span:2}));
+    });
+    rows+=TR(hts[10],TC(M,P(RUN('QTY',34,0,'Arial'),'center'),{shade:1})+TC(Q,P(RUN('BOX NO',34,0,'Arial'),'center'),{shade:1}));
+    rows+=TR(hts[11],TC(M,P(RUN(it.qty,fs(it.qty,20),0,'Arial'),'center'))+TC(Q,P(RUN(it.box+'     /     '+it.total,40,0,'Arial'),'center')));
+    return `<w:tbl><w:tblPr><w:tblW w:w='${R}' w:type='dxa'/><w:tblBorders>${bd('insideH',8)}${bd('insideV',8)}</w:tblBorders><w:tblLayout w:type='fixed'/><w:tblCellMar><w:left w:w='108' w:type='dxa'/><w:right w:w='108' w:type='dxa'/></w:tblCellMar></w:tblPr><w:tblGrid><w:gridCol w:w='${M}'/><w:gridCol w:w='${Q}'/></w:tblGrid>${rows}</w:tbl>`;
+  };
+  const pic=it=>{
+    if(!it.img)return P('');
+    const d=cellImg(it.img);if(!media.has(d))media.set(d,media.size+1);const n=media.get(d);
+    const cx=Math.round(L*0.97*635),cy=Math.round(cx*745/448),id=++did;
+    return P(`<w:r><w:drawing><wp:inline distT='0' distB='0' distL='0' distR='0'><wp:extent cx='${cx}' cy='${cy}'/><wp:docPr id='${id}' name='Foto ${id}'/><a:graphic><a:graphicData uri='http://schemas.openxmlformats.org/drawingml/2006/picture'><pic:pic><pic:nvPicPr><pic:cNvPr id='${id}' name='foto${n}.jpg'/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed='rIdImg${n}'/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x='0' y='0'/><a:ext cx='${cx}' cy='${cy}'/></a:xfrm><a:prstGeom prst='rect'><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r>`,'center');
+  };
+  const body=ls.map((it,i)=>P(RUN(hdr,90,1,'Arial Black'),'center',i?'<w:pageBreakBefore/>':'')+`<w:tbl><w:tblPr><w:tblW w:w='${L+R}' w:type='dxa'/><w:jc w:val='center'/><w:tblBorders>${bd('top',12)}${bd('left',12)}${bd('bottom',12)}${bd('right',12)}${bd('insideV',8)}</w:tblBorders><w:tblLayout w:type='fixed'/></w:tblPr><w:tblGrid><w:gridCol w:w='${L}'/><w:gridCol w:w='${R}'/></w:tblGrid><w:tr><w:trPr><w:cantSplit/><w:trHeight w:val='${H0+40}' w:hRule='exact'/></w:trPr>${TC(L,pic(it),{mar:1})}${TC(R,nest(it)+tiny,{mar:1,top:1})}</w:tr></w:tbl>`).join('')+tiny;
+  const z=new JSZip(),hd=`<?xml version='1.0' encoding='UTF-8' standalone='yes'?>`;
+  const ns=`xmlns:w='http://schemas.openxmlformats.org/wordprocessingml/2006/main' xmlns:r='http://schemas.openxmlformats.org/officeDocument/2006/relationships' xmlns:wp='http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing' xmlns:a='http://schemas.openxmlformats.org/drawingml/2006/main' xmlns:pic='http://schemas.openxmlformats.org/drawingml/2006/picture'`;
+  z.file('[Content_Types].xml',hd+`<Types xmlns='http://schemas.openxmlformats.org/package/2006/content-types'><Default Extension='rels' ContentType='application/vnd.openxmlformats-package.relationships+xml'/><Default Extension='xml' ContentType='application/xml'/><Default Extension='jpg' ContentType='image/jpeg'/><Override PartName='/word/document.xml' ContentType='application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml'/></Types>`);
+  z.file('_rels/.rels',hd+`<Relationships xmlns='http://schemas.openxmlformats.org/package/2006/relationships'><Relationship Id='rId1' Type='http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument' Target='word/document.xml'/></Relationships>`);
+  let rel='';
+  media.forEach((n,d)=>{rel+=`<Relationship Id='rIdImg${n}' Type='http://schemas.openxmlformats.org/officeDocument/2006/relationships/image' Target='media/foto${n}.jpg'/>`;z.file('word/media/foto'+n+'.jpg',d.split(',')[1],{base64:true})});
+  z.file('word/_rels/document.xml.rels',hd+`<Relationships xmlns='http://schemas.openxmlformats.org/package/2006/relationships'>${rel}</Relationships>`);
+  z.file('word/document.xml',hd+`<w:document ${ns}><w:body>${body}<w:sectPr><w:pgSz w:w='16838' w:h='11906' w:orient='landscape'/><w:pgMar w:top='567' w:right='567' w:bottom='567' w:left='567' w:header='0' w:footer='0' w:gutter='0'/></w:sectPr></w:body></w:document>`);
+  return z.generateAsync({type:'blob',compression:'DEFLATE',mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
+}
+const F=[["code","Kode"],["desc","Deskripsi"],["color","Warna"],["meas","Ukuran"],["mat","Material"],["qty","QTY"]];
+function forms(){
+  $("forms").innerHTML=items.map((it,i)=>`
+  <div class="card" data-i="${i}">
+    <div class="row" style="justify-content:space-between;margin-bottom:4px"><h2 style="margin:0">Label ${i+1}</h2>
+      <span class="row"><button class="s" data-a="dup">Duplikat</button><button class="s" data-a="del">Hapus</button></span></div>
+    ${F.map(f=>`<label>${f[1]}</label><input type="text" data-k="${f[0]}" value="${esc(it[f[0]])}">`).join("")}
+    <div class="g2"><div><label>Box ke</label><input type="text" data-k="box" value="${esc(it.box)}"></div>
+    <div><label>Total box</label><input type="text" data-k="total" value="${esc(it.total)}"></div></div>
+    <label>Foto produk (opsional)</label>
+    <input type="file" accept="image/*" data-a="img">
+    <div class="row" style="margin-top:6px"><button class="s" data-a="imgall">Pakai foto ini untuk semua</button><button class="s" data-a="imgdel">Hapus foto</button></div>
+  </div>`).join("");
+}
+$("forms").addEventListener("input",e=>{
+  const k=e.target.dataset.k;if(!k)return;
+  items[+e.target.closest(".card").dataset.i][k]=e.target.value;later();
+});
+$("forms").addEventListener("change",e=>{
+  if(e.target.dataset.a!=="img"||!e.target.files[0])return;
+  const it=items[+e.target.closest(".card").dataset.i];
+  const fr=new FileReader();
+  fr.onload=()=>{const im=new Image();im.onload=()=>{it.img=im;render()};im.src=fr.result};
+  fr.readAsDataURL(e.target.files[0]);
+});
+$("forms").addEventListener("click",e=>{
+  const a=e.target.dataset.a;if(!a||a==="img")return;
+  const i=+e.target.closest(".card").dataset.i;
+  if(a==="del"){items.splice(i,1);if(!items.length)items.push(blank());forms()}
+  if(a==="dup"){items.splice(i+1,0,{...items[i]});forms()}
+  if(a==="imgall")items.forEach(t=>t.img=items[i].img);
+  if(a==="imgdel"){items[i].img=null;forms()}
+  render();
+});
+$("add").onclick=()=>{items.push(blank());forms();render()};
+$("hdr").oninput=later;$("auto").onchange=render;
+$("tog").onclick=()=>{const d=$("imp");d.style.display=d.style.display==="none"?"block":"none"};
+$("impgo").onclick=()=>{
+  const rows=$("impt").value.split(/\r?\n/).filter(r=>r.trim()&&!/^kode\t/i.test(r));
+  rows.forEach(r=>{
+    const c=r.split("\t");
+    items.push({code:c[0]||"",desc:c[1]||"",color:c[2]||"",meas:c[3]||"",mat:c[4]||"",qty:c[5]||"1 Pcs / BOX",box:c[6]||"1",total:c[7]||"1",img:null});
+  });
+  $("impt").value="";forms();render();
+};
+forms();render();
+
+// ===== Simpan online (Neon lewat Netlify Function /api/labels) =====
+const sbmsg=t=>{$("sbmsg").textContent=t};
+async function api(qs,opt){
+  const r=await fetch("/api/labels"+(qs||""),opt);
+  let j=null;try{j=await r.json()}catch(e){}
+  if(!r.ok)throw new Error((j&&j.error)||("HTTP "+r.status));
+  return j;
+}
+function imgData(im){
+  const r=Math.min(1,700/Math.max(im.width,im.height));
+  const c=document.createElement("canvas");c.width=Math.round(im.width*r);c.height=Math.round(im.height*r);
+  const g=c.getContext("2d");g.fillStyle="#fff";g.fillRect(0,0,c.width,c.height);g.drawImage(im,0,0,c.width,c.height);
+  return c.toDataURL("image/jpeg",0.75);
+}
+const shareUrl=id=>location.origin+location.pathname+"?set="+id;
+$("sbsave").onclick=async()=>{
+  const name=$("sbname").value.trim();
+  if(!name){sbmsg("Isi nama set label dulu.");return}
+  try{
+    sbmsg("Menyimpan...");
+    const imgs=[],map=new Map();
+    const its=items.map(it=>{
+      let ix=null;
+      if(it.img){if(!map.has(it.img)){map.set(it.img,imgs.length);imgs.push(imgData(it.img))}ix=map.get(it.img)}
+      const {img,...rest}=it;return {...rest,img:ix};
+    });
+    const body=JSON.stringify({name,header:$("hdr").value,auto:$("auto").checked,items:its,images:imgs});
+    if(body.length>4000000){sbmsg("Data terlalu besar (foto terlalu banyak). Kurangi jumlah foto berbeda.");return}
+    const res=await api("",{method:"POST",headers:{"Content-Type":"application/json"},body});
+    const id=res&&res.id;
+    sbmsg("Tersimpan online."+(id?" Link: "+shareUrl(id):""));
+    if(id){history.replaceState(null,"","?set="+id);sbLast=id}
+  }catch(e){sbmsg("Gagal menyimpan: "+e.message)}
+};
+let sbLast=null;
+$("sblist").onclick=async()=>{
+  try{
+    sbmsg("Memuat daftar...");
+    const rows=await api("");
+    const sel=$("sbsel");sel.innerHTML="";
+    rows.forEach(r=>{const o=document.createElement("option");o.value=r.id;o.textContent=r.name+" ("+new Date(r.created_at).toLocaleDateString("id-ID")+")";sel.appendChild(o)});
+    $("sbpick").style.display=rows.length?"block":"none";
+    sbmsg(rows.length?rows.length+" set ditemukan.":"Belum ada set tersimpan.");
+  }catch(e){sbmsg("Gagal memuat: "+e.message)}
+};
+const loadIm=src=>new Promise(res=>{const im=new Image();im.onload=()=>res(im);im.onerror=()=>res(null);im.src=src});
+async function sbOpen(id){
+  if(!/^[0-9a-f-]{36}$/i.test(id)){sbmsg("ID set tidak valid.");return}
+  try{
+    sbmsg("Membuka set...");
+    const r=await api("?id="+id);
+    const ims=await Promise.all((r.images||[]).map(loadIm));
+    items=(r.items||[]).map(t=>({...blank(),...t,img:t.img==null?null:(ims[t.img]||null)}));
+    if(!items.length)items=[blank()];
+    $("hdr").value=r.header||"MPL";$("auto").checked=!!r.auto;$("sbname").value=r.name||"";
+    sbLast=id;forms();render();sbmsg("Set dibuka: "+r.name);
+  }catch(e){sbmsg("Gagal membuka: "+e.message)}
+}
+$("sbload").onclick=()=>{const id=$("sbsel").value;if(id){history.replaceState(null,"","?set="+id);sbOpen(id)}};
+$("sbcopy").onclick=async()=>{
+  const id=$("sbsel").value||sbLast;if(!id){sbmsg("Pilih atau simpan set dulu.");return}
+  try{await navigator.clipboard.writeText(shareUrl(id));sbmsg("Link disalin.")}catch(e){sbmsg("Link: "+shareUrl(id))}
+};
+{const q=new URLSearchParams(location.search).get("set");if(q)sbOpen(q)}
+</script>
+</body>
+</html>
